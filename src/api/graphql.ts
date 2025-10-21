@@ -25,6 +25,7 @@ export const DETECTIONS_QUERY = `
           color
           imageUrl
           thumbnailUrl
+          wikipediaSummary
         }
         station {
           id
@@ -85,6 +86,7 @@ export const SPECIES_DETECTIONS_QUERY = `
           color
           imageUrl
           thumbnailUrl
+          wikipediaSummary
         }
         station {
           id

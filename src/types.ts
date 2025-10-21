@@ -15,6 +15,7 @@ export interface Species {
   color: string;
   imageUrl?: string;
   thumbnailUrl?: string;
+  wikipediaSummary?: string;
 }
 
 export interface Station {

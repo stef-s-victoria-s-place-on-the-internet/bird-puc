@@ -125,6 +125,13 @@ export function SpeciesDetail() {
           <div className="species-detail-info">
             <h1 className="species-detail-title">{species.commonName}</h1>
             <p className="species-detail-scientific">{species.scientificName}</p>
+            
+            {species.wikipediaSummary && (
+              <div className="species-wikipedia-summary">
+                <p>{species.wikipediaSummary}</p>
+              </div>
+            )}
+            
             <p className="species-detail-count">
               Total Detections: <strong>{totalCount}</strong>
               {stationIds.length > 0 && (

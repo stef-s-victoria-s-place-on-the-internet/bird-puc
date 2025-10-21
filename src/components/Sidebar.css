@@ -1,57 +1,61 @@
+/* ============================================
+   SIDEBAR - IBM DOCUMENT STYLE
+   ============================================ */
+
 .sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 380px;
-  background: rgba(30, 27, 75, 0.95);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  z-index: 1000;
-  transition: transform 0.3s ease, width 0.3s ease;
+  width: var(--sidebar-width);
+  background-color: var(--color-bg-secondary);
+  border-right: var(--border-width-thin) solid var(--color-border-tertiary);
+  transition: width var(--transition-normal);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex-shrink: 0;
+  height: 100vh;
 }
 
 .sidebar.collapsed {
   width: 60px;
 }
 
+/* ============================================
+   Sidebar Header
+   ============================================ */
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-6) var(--space-4);
+  border-bottom: var(--border-width-thin) solid var(--color-border-tertiary);
   flex-shrink: 0;
+  position: relative;
+  background-color: var(--color-bg-tertiary);
 }
 
 .sidebar.collapsed .sidebar-header {
   justify-content: center;
-  padding: 1.5rem 0.5rem;
+  padding: var(--space-6) var(--space-2);
 }
 
 .sidebar-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: var(--font-size-xl);
+  font-weight: normal;
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-text-primary);
+  border: none;
 }
 
 .sidebar-toggle {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  font-size: 1.25rem;
+  border: var(--border-width-thin) solid var(--color-border-secondary);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,31 +64,35 @@
 }
 
 .sidebar-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+  background-color: var(--color-bg-hover);
 }
 
 .sidebar-toggle:active {
-  transform: scale(0.95);
+  background-color: var(--color-bg-active);
 }
 
+/* ============================================
+   Sidebar Content
+   ============================================ */
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1.25rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: var(--space-6);
+  background-color: var(--color-bg-secondary);
 }
 
 .sidebar-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 -0.5rem;
+  height: var(--border-width-thin);
+  background-color: var(--color-border-tertiary);
+  margin: var(--space-2) calc(var(--space-4) * -1);
 }
 
-/* Update SearchFilters when inside sidebar */
+/* ============================================
+   Sidebar Sections
+   ============================================ */
 .sidebar-content .search-filters {
   background: transparent;
   border: none;
@@ -96,14 +104,22 @@
   display: none;
 }
 
-/* Sidebar overlay for mobile */
+/* ============================================
+   Sidebar Overlay (Mobile)
+   ============================================ */
 .sidebar-overlay {
   display: none;
 }
 
-/* Mobile responsive */
+/* ============================================
+   Mobile Responsive
+   ============================================ */
 @media (max-width: 768px) {
   .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
     transform: translateX(-100%);
   }
 
@@ -123,7 +139,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
     z-index: 999;
   }
 
@@ -132,21 +148,23 @@
   }
 }
 
-/* Scrollbar styling for sidebar */
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
 .sidebar-content::-webkit-scrollbar {
-  width: 8px;
+  width: 12px;
 }
 
 .sidebar-content::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--color-bg-secondary);
+  border-left: var(--border-width-thin) solid var(--color-border-tertiary);
 }
 
 .sidebar-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: var(--color-border-tertiary);
+  border: var(--border-width-thin) solid var(--color-border-tertiary);
 }
 
 .sidebar-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--color-border-secondary);
 }
-

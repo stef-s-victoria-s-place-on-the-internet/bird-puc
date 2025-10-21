@@ -18,6 +18,14 @@ export function Settings({ onTimeFormatChange, onNormalizeAudioUrlsChange, pageS
     return loadSettings().normalizeAudioUrls;
   });
 
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') {
+      return saved;
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
   useEffect(() => {
     const settings = loadSettings();
     settings.timeFormat = timeFormat;
@@ -38,10 +46,36 @@ export function Settings({ onTimeFormatChange, onNormalizeAudioUrlsChange, pageS
     }
   }, [normalizeAudioUrls, onNormalizeAudioUrlsChange]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   return (
     <div className="settings">
       <h3 className="settings-title">Settings</h3>
       
+      <div className="setting-group">
+        <label className="setting-label">Theme</label>
+        <div className="setting-options">
+          <button
+            className={`setting-option ${theme === 'light' ? 'active' : ''}`}
+            onClick={() => setTheme('light')}
+          >
+            Light
+          </button>
+          <button
+            className={`setting-option ${theme === 'dark' ? 'active' : ''}`}
+            onClick={() => setTheme('dark')}
+          >
+            Dark
+          </button>
+        </div>
+        <p className="setting-description">
+          {theme === 'light' ? 'Light mode active' : 'Dark mode active'}
+        </p>
+      </div>
+
       <div className="setting-group">
         <label className="setting-label">Time Format</label>
         <div className="setting-options">

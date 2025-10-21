@@ -1,36 +1,37 @@
+/* ============================================
+   DATE PICKER - IBM DOCUMENT STYLE
+   ============================================ */
+
 .date-picker {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--color-bg-secondary);
+  border: var(--border-width-medium) solid var(--color-border-primary);
 }
 
 .date-nav-btn {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  font-size: 1.2rem;
+  border: var(--border-width-medium) solid var(--color-border-primary);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
 }
 
 .date-nav-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
+  background-color: var(--color-bg-hover);
 }
 
 .date-nav-btn:active:not(:disabled) {
-  transform: scale(0.95);
+  background-color: var(--color-bg-active);
 }
 
 .date-nav-btn:disabled {
@@ -56,41 +57,42 @@
 
 .date-label {
   display: block;
-  font-size: 1rem;
-  font-weight: 500;
-  color: white;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-mono);
+  font-weight: bold;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-bg-primary);
+  border: var(--border-width-thin) solid var(--color-border-primary);
+  transition: all var(--transition-fast);
 }
 
 .date-display:hover .date-label {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border-secondary);
 }
 
 .today-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(59, 130, 246, 0.3);
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-medium) solid var(--color-border-primary);
+  background-color: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
   white-space: nowrap;
 }
 
 .today-btn:hover {
-  background: rgba(59, 130, 246, 0.5);
-  border-color: rgba(59, 130, 246, 0.6);
-  transform: scale(1.05);
+  background-color: var(--color-text-secondary);
 }
 
 .today-btn:active {
-  transform: scale(0.95);
+  background-color: var(--color-text-tertiary);
 }
-

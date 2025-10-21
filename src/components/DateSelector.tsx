@@ -58,6 +58,7 @@ export function DateSelector({ selectedDate, onDateChange, dayCounts = {} }: Dat
         disabled={(date) => date > new Date()}
         className="date-selector-calendar"
         month={selectedDate}
+        weekStartsOn={1}
         components={{
           DayButton: CustomDayButton,
         }}

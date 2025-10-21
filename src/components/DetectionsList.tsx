@@ -4,6 +4,8 @@ import { graphqlClient, DETECTIONS_QUERY } from '../api/graphql';
 import { DetectionsResponse, Detection, FilterState } from '../types';
 import { DatePicker } from './DatePicker';
 import { Sidebar } from './Sidebar';
+import { loadFilters } from '../utils/localStorage';
+import { loadSettings, TimeFormat } from '../utils/settings';
 import './DetectionsList.css';
 
 export function DetectionsList() {
@@ -12,7 +14,14 @@ export function DetectionsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [filters, setFilters] = useState<FilterState>({ stationIds: [], stationNames: [] });
+  const [filters, setFilters] = useState<FilterState>(() => {
+    // Initialize with saved filters from localStorage
+    const savedFilters = loadFilters();
+    return savedFilters || { stationIds: [], stationNames: [] };
+  });
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>(() => {
+    return loadSettings().timeFormat;
+  });
 
   const fetchDetections = useCallback(async () => {
     setLoading(true);
@@ -68,8 +77,27 @@ export function DetectionsList() {
   }, []);
 
   const formatTime = (timestamp: string) => {
-    return format(new Date(timestamp), 'h:mm:ss a');
+    const date = new Date(timestamp);
+    
+    let hour12: boolean | undefined = undefined;
+    if (timeFormat === '12h') {
+      hour12 = true;
+    } else if (timeFormat === '24h') {
+      hour12 = false;
+    }
+    // If 'auto', leave undefined to use locale default
+    
+    return date.toLocaleTimeString(navigator.language, {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: hour12
+    });
   };
+
+  const handleTimeFormatChange = useCallback((format: TimeFormat) => {
+    setTimeFormat(format);
+  }, []);
 
   const formatConfidence = (confidence: number) => {
     return `${(confidence * 100).toFixed(1)}%`;
@@ -77,7 +105,10 @@ export function DetectionsList() {
 
   return (
     <>
-      <Sidebar onFiltersChange={handleFiltersChange} />
+      <Sidebar 
+        onFiltersChange={handleFiltersChange}
+        onTimeFormatChange={handleTimeFormatChange}
+      />
       
       <div className="detections-container">
         <header className="detections-header">

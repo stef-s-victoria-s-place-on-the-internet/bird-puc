@@ -9,6 +9,17 @@
 - **Persistent State**: Sidebar state saved to localStorage
 - **Mobile Responsive**: Automatically adapts on mobile devices
 - **Smooth Animations**: Transitions for expand/collapse actions
+- **Organized Sections**: Filters at top, Settings at bottom with divider
+
+## ⚙️ Settings
+
+### Time Format Preferences
+- **Auto Mode**: Uses your browser/system locale preference
+- **12-Hour Format**: Always displays times with AM/PM (e.g., 3:45:12 PM)
+- **24-Hour Format**: Always displays times in 24h format (e.g., 15:45:12)
+- **Persistent**: Choice saved to localStorage
+- **Real-time Update**: Changes apply immediately to all timestamps
+- **Visual Buttons**: Three-button toggle with active state indicator
 
 ## 🔍 Search & Filter System
 
@@ -65,10 +76,14 @@
 ### Files Created:
 - `src/components/SearchFilters.tsx` - Main filter component
 - `src/components/SearchFilters.css` - Filter styling
-- `src/utils/localStorage.ts` - LocalStorage utilities
+- `src/components/Settings.tsx` - Settings panel
+- `src/components/Settings.css` - Settings styling
+- `src/utils/localStorage.ts` - Filter persistence utilities
+- `src/utils/settings.ts` - Settings management
 - Updated `src/types.ts` - Added filter types
 - Updated `src/api/graphql.ts` - Added stations query
-- Updated `src/components/DetectionsList.tsx` - Integrated filters
+- Updated `src/components/DetectionsList.tsx` - Integrated filters & settings
+- Updated `src/components/Sidebar.tsx` - Added settings section
 
 ### Key Features:
 - TypeScript for type safety
@@ -105,12 +120,20 @@
    - Click × on history items to remove them
    - History limited to 10 most recent items
 
+5. **Settings**:
+   - Scroll down in the sidebar to access settings
+   - Change time format preference (Auto/12h/24h)
+   - Settings save automatically
+   - Changes apply immediately to all detections
+
 ## 📝 Future Enhancements (Ideas)
 
 - Add species filtering
 - Add confidence threshold slider
 - Add date range selection
+- Add more settings (theme, units, etc.)
 - Export filtered results
 - Save filter presets
 - Share filter URLs
+- Dark/Light mode toggle
 

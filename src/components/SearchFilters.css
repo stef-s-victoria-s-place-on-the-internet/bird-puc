@@ -225,6 +225,21 @@
   font-size: 0.875rem;
 }
 
+.tag-thumbnail {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.species-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .tag-name {
   font-weight: 500;
 }
@@ -304,6 +319,16 @@
 .species-icon {
   font-size: 1rem;
   flex-shrink: 0;
+}
+
+.species-thumbnail-filter {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .species-info-dropdown {

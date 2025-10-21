@@ -51,13 +51,14 @@ export function SearchFilters({ onFiltersChange, availableSpecies }: SearchFilte
         setSelectedStations(stations);
       }
       
-      // Load other filter states
+      // Load other filter states - we'll update species from availableSpecies once loaded
       if (savedFilters.speciesIds && savedFilters.speciesIds.length > 0) {
         const species = savedFilters.speciesIds.map((id, index) => ({
           id,
           commonName: savedFilters.speciesNames[index] || `Species ${id}`,
           scientificName: '',
           color: '#ffffff',
+          thumbnailUrl: '',
         }));
         setSelectedSpecies(species);
       }
@@ -77,6 +78,23 @@ export function SearchFilters({ onFiltersChange, availableSpecies }: SearchFilte
     
     setSearchHistory(getSearchHistory());
   }, []);
+
+  // Update selected species with full data from availableSpecies when available
+  useEffect(() => {
+    if (availableSpecies.length > 0 && selectedSpecies.length > 0) {
+      const updatedSpecies = selectedSpecies.map(selected => {
+        const fullSpecies = availableSpecies.find(s => s.id === selected.id);
+        return fullSpecies || selected;
+      });
+      // Only update if there are actual changes
+      const hasChanges = updatedSpecies.some((species, index) => 
+        species.thumbnailUrl !== selectedSpecies[index].thumbnailUrl
+      );
+      if (hasChanges) {
+        setSelectedSpecies(updatedSpecies);
+      }
+    }
+  }, [availableSpecies, selectedSpecies]);
 
   // Fetch stations based on search query with debouncing
   useEffect(() => {
@@ -418,7 +436,15 @@ export function SearchFilters({ onFiltersChange, availableSpecies }: SearchFilte
                       className="dropdown-item species-item"
                       onClick={() => handleSpeciesSelect(species)}
                     >
-                      <span className="species-icon">🐦</span>
+                      {species.thumbnailUrl ? (
+                        <img 
+                          src={species.thumbnailUrl} 
+                          alt={species.commonName}
+                          className="species-thumbnail-filter"
+                        />
+                      ) : (
+                        <span className="species-icon">🐦</span>
+                      )}
                       <div className="species-info-dropdown">
                         <span className="species-common">{species.commonName}</span>
                         <span className="species-scientific">{species.scientificName}</span>
@@ -438,8 +464,16 @@ export function SearchFilters({ onFiltersChange, availableSpecies }: SearchFilte
         {selectedSpecies.length > 0 && (
           <div className="selected-items">
             {selectedSpecies.map(species => (
-              <div key={species.id} className="selected-tag">
-                <span className="tag-icon">🐦</span>
+              <div key={species.id} className="selected-tag species-tag">
+                {species.thumbnailUrl ? (
+                  <img 
+                    src={species.thumbnailUrl} 
+                    alt={species.commonName}
+                    className="tag-thumbnail"
+                  />
+                ) : (
+                  <span className="tag-icon">🐦</span>
+                )}
                 <span className="tag-name">{species.commonName}</span>
                 <button
                   onClick={() => handleSpeciesRemove(species.id)}

@@ -23,7 +23,15 @@ export interface Station {
 }
 
 export interface Soundscape {
+  id: string;
   url: string;
+  downloadFilename?: string;
+  duration?: number;
+  startTime?: number;
+  endTime?: number;
+  filesize?: number;
+  mode?: string;
+  timestamp?: string;
 }
 
 export interface DetectionEdge {

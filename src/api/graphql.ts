@@ -10,8 +10,8 @@ export const graphqlClient = new GraphQLClient(API_URL, {
 });
 
 export const DETECTIONS_QUERY = `
-  query GetDetections($period: InputDuration, $first: Int, $stationIds: [ID!]) {
-    detections(period: $period, first: $first, stationIds: $stationIds) {
+  query GetDetections($period: InputDuration, $first: Int, $after: String, $stationIds: [ID!]) {
+    detections(period: $period, first: $first, after: $after, stationIds: $stationIds) {
       nodes {
         id
         timestamp
@@ -30,7 +30,14 @@ export const DETECTIONS_QUERY = `
           name
         }
         soundscape {
+          id
           url
+          downloadFilename
+          duration
+          startTime
+          endTime
+          filesize
+          timestamp
         }
       }
       pageInfo {

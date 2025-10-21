@@ -26,6 +26,7 @@ const formatDateForAPI = (date: Date): string => {
 
 export function DetectionsList() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [prevDate, setPrevDate] = useState(new Date());
   const [detections, setDetections] = useState<Detection[]>([]);
   const [dayCounts, setDayCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,13 @@ export function DetectionsList() {
     const saved = localStorage.getItem('layoutMode');
     return (saved as LayoutMode) || 'timeline';
   });
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const saved = localStorage.getItem('pageSize');
+    return saved ? parseInt(saved, 10) : 1000;
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [pageCursors, setPageCursors] = useState<string[]>(['']); // Store cursor for each page (empty string for first page)
 
   const fetchDetections = useCallback(async () => {
     // Require station selection before fetching
@@ -83,17 +91,26 @@ export function DetectionsList() {
           to: string;
         };
         first: number;
+        after?: string;
         stationIds: string[];
       }
+
+      // Get the cursor for the current page
+      const afterCursor = pageCursors[currentPage - 1];
 
       const variables: QueryVariables = {
         period: {
           from: formatDateForAPI(start),
           to: formatDateForAPI(end),
         },
-        first: 100,
+        first: pageSize,
         stationIds: filters.stationIds,
       };
+
+      // Only include 'after' if we're not on the first page
+      if (afterCursor) {
+        variables.after = afterCursor;
+      }
 
       const data = await graphqlClient.request<DetectionsResponse>(
         DETECTIONS_QUERY,
@@ -102,6 +119,12 @@ export function DetectionsList() {
 
       setDetections(data.detections.nodes);
       setTotalCount(data.detections.totalCount);
+      setHasNextPage(data.detections.pageInfo.hasNextPage);
+
+      // Store the endCursor for the next page if we haven't stored it yet
+      if (data.detections.pageInfo.hasNextPage && pageCursors.length === currentPage) {
+        setPageCursors(prev => [...prev, data.detections.pageInfo.endCursor]);
+      }
     } catch (err) {
       console.error('Error fetching detections:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch detections');
@@ -109,7 +132,7 @@ export function DetectionsList() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [selectedDate, filters, detections.length]);
+  }, [selectedDate, filters, detections.length, pageSize, currentPage, pageCursors]);
 
   // Fetch monthly counts for calendar
   const fetchMonthlyCounts = useCallback(async () => {
@@ -160,6 +183,15 @@ export function DetectionsList() {
   }, [selectedDate, filters]);
 
   useEffect(() => {
+    // Reset to page 1 and clear cursors when date changes
+    if (selectedDate.toDateString() !== prevDate.toDateString()) {
+      setCurrentPage(1);
+      setPageCursors(['']);
+      setPrevDate(selectedDate);
+    }
+  }, [selectedDate, prevDate]);
+
+  useEffect(() => {
     fetchDetections();
   }, [fetchDetections]);
 
@@ -169,6 +201,8 @@ export function DetectionsList() {
 
   const handleFiltersChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+    setPageCursors(['']); // Reset cursors
   }, []);
 
   const formatTime = (timestamp: string) => {
@@ -198,6 +232,25 @@ export function DetectionsList() {
     setLayoutMode(mode);
     localStorage.setItem('layoutMode', mode);
   }, []);
+
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+    setPageCursors(['']); // Reset cursors
+    localStorage.setItem('pageSize', newPageSize.toString());
+  }, []);
+
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  }, [currentPage]);
+
+  const handleNextPage = useCallback(() => {
+    if (hasNextPage) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [hasNextPage]);
 
   // Get unique species from detections for the filter dropdown
   const availableSpecies = detections.reduce((acc, detection) => {
@@ -260,6 +313,18 @@ export function DetectionsList() {
     return `${(confidence * 100).toFixed(1)}%`;
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds);
+    const secs = Math.floor((seconds - mins) * 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleDownloadAll = async () => {
     if (filters.stationIds.length === 0) {
       alert('Please select at least one station to download detections.');
@@ -315,7 +380,7 @@ export function DetectionsList() {
       }, {} as Record<string, Detection[]>);
 
       // Count total files to download
-      const totalFiles = allDetections.filter(d => d.soundscape?.url).length;
+      const totalFiles = allDetections.filter(d => d.soundscape?.id).length;
       setDownloadProgress({ current: 0, total: totalFiles });
 
       let downloadedCount = 0;
@@ -328,16 +393,16 @@ export function DetectionsList() {
 
         if (speciesFolder) {
           for (const detection of speciesDetections) {
-            if (detection.soundscape?.url) {
+            if (detection.soundscape?.id) {
               try {
-                // Fetch the audio file
-                const response = await fetch(detection.soundscape.url);
+                // Fetch the audio file using normalized URL
+                const audioUrl = detection.soundscape.url.replace('/soundscapes/', '/soundscapes/normalize/').replace('media.birdweather', 'app.birdweather');
+                const response = await fetch(audioUrl);
                 const blob = await response.blob();
                 
-                // Create filename with timestamp
-                const timestamp = format(new Date(detection.timestamp), 'yyyy-MM-dd_HH-mm-ss');
-                const confidence = (detection.confidence * 100).toFixed(0);
-                const fileName = `${timestamp}_${confidence}pct.mp3`;
+                // Use the download filename from API or create a descriptive one
+                const fileName = detection.soundscape.downloadFilename || 
+                  `${format(new Date(detection.timestamp), 'yyyy-MM-dd_HH-mm-ss')}_${(detection.confidence * 100).toFixed(0)}pct.mp3`;
                 
                 // Add file to species folder
                 speciesFolder.file(fileName, blob);
@@ -384,12 +449,14 @@ export function DetectionsList() {
       <div className="detections-container">
         <header className="detections-header">
           <div className="header-left">
-            <h1>Bird Detections</h1>
-            {totalCount > 0 && (
-              <span className="detection-count">
-                {filteredAndSortedDetections.length} of {totalCount} {totalCount === 1 ? 'detection' : 'detections'}
-              </span>
-            )}
+            <div className="header-title-section">
+              <h1>Bird Detections</h1>
+              {totalCount > 0 && (
+                <span className="detection-count">
+                  {filteredAndSortedDetections.length} of {totalCount} {totalCount === 1 ? 'detection' : 'detections'}
+                </span>
+              )}
+            </div>
             {isRefreshing && (
               <span className="refreshing-indicator">
                 <div className="mini-spinner"></div>
@@ -399,26 +466,44 @@ export function DetectionsList() {
           </div>
           <div className="header-right">
             {filteredAndSortedDetections.length > 0 && (
-              <div className="layout-switcher">
-                <button
-                  className={`layout-btn ${layoutMode === 'timeline' ? 'active' : ''}`}
-                  onClick={() => handleLayoutModeChange('timeline')}
-                  title="Timeline view"
-                >
-                  <span className="layout-icon">📅</span>
-                  Timeline
-                </button>
-                <button
-                  className={`layout-btn ${layoutMode === 'grouped' ? 'active' : ''}`}
-                  onClick={() => handleLayoutModeChange('grouped')}
-                  title="Group by species"
-                >
-                  <span className="layout-icon">🦜</span>
-                  By Bird
-                </button>
-              </div>
+              <>
+                <div className="layout-switcher">
+                  <button
+                    className={`layout-btn ${layoutMode === 'timeline' ? 'active' : ''}`}
+                    onClick={() => handleLayoutModeChange('timeline')}
+                    title="Timeline view"
+                  >
+                    <span className="layout-icon">📅</span>
+                    Timeline
+                  </button>
+                  <button
+                    className={`layout-btn ${layoutMode === 'grouped' ? 'active' : ''}`}
+                    onClick={() => handleLayoutModeChange('grouped')}
+                    title="Group by species"
+                  >
+                    <span className="layout-icon">🦜</span>
+                    By Bird
+                  </button>
+                </div>
+                <div className="page-size-selector">
+                  <label htmlFor="page-size">Page size:</label>
+                  <select
+                    id="page-size"
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="page-size-select"
+                  >
+                    <option value={100}>100</option>
+                    <option value={250}>250</option>
+                    <option value={500}>500</option>
+                    <option value={1000}>1000</option>
+                    <option value={2500}>2500</option>
+                    <option value={5000}>5000</option>
+                  </select>
+                </div>
+              </>
             )}
-            {detections.length > 0 && detections.some(d => d.soundscape?.url) && (
+            {detections.length > 0 && detections.some(d => d.soundscape?.id) && (
               <button
                 onClick={handleDownloadAll}
                 disabled={isDownloading}
@@ -500,6 +585,43 @@ export function DetectionsList() {
                     <p className="scientific-name">{detection.species.scientificName}</p>
                   </div>
                 </div>
+
+                {detection.soundscape?.id ? (
+                  <div className="audio-wrapper">
+                    <audio controls preload='metadata' className="audio-player">
+                      <source src={detection.soundscape.url.replace('/soundscapes/', '/soundscapes/normalize/').replace('media.birdweather', 'app.birdweather')} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                    {(detection.soundscape.duration || detection.soundscape.startTime !== undefined || 
+                      detection.soundscape.filesize || detection.soundscape.mode) && (
+                      <div className="audio-metadata">
+                        {detection.soundscape.duration !== undefined && (
+                          <span className="audio-info" title="Duration">
+                            ⏱️ {formatDuration(detection.soundscape.duration)}
+                          </span>
+                        )}
+                        {detection.soundscape.startTime !== undefined && detection.soundscape.endTime !== undefined && (
+                          <span className="audio-info" title="Detection window">
+                            📍 {detection.soundscape.startTime.toFixed(1)}s - {detection.soundscape.endTime.toFixed(1)}s
+                          </span>
+                        )}
+                        {detection.soundscape.filesize !== undefined && (
+                          <span className="audio-info" title="File size">
+                            💾 {formatFileSize(detection.soundscape.filesize)}
+                          </span>
+                        )}
+                        {detection.soundscape.mode && (
+                          <span className="audio-info audio-mode" title="Recording mode">
+                            {detection.soundscape.mode}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="audio-spacer"></div>
+                )}
+
                 <div className="detection-meta">
                   <span className="timestamp">{formatTime(detection.timestamp)}</span>
                   <span 
@@ -514,19 +636,14 @@ export function DetectionsList() {
                 </div>
               </div>
 
-              <div className="detection-details">
-                <div className="station-info">
-                  <span className="station-icon">📍</span>
-                  <span className="station-name">{detection.station.name}</span>
+              {filters.stationIds.length > 1 && (
+                <div className="detection-details">
+                  <div className="station-info">
+                    <span className="station-icon">📍</span>
+                    <span className="station-name">{detection.station.name}</span>
+                  </div>
                 </div>
-
-                {detection.soundscape?.url && (
-                  <audio controls preload='metadata' className="audio-player">
-                    <source src={detection.soundscape.url} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
-                )}
-              </div>
+              )}
             </div>
           ))}
         </div>
@@ -565,7 +682,6 @@ export function DetectionsList() {
                   )}
                   <div className="species-group-info">
                     <h2 className="species-group-title">{species.commonName}</h2>
-                    <p className="species-group-subtitle">{species.scientificName}</p>
                     <span className="detection-count-badge">
                       {groupDetections.length} {groupDetections.length === 1 ? 'detection' : 'detections'}
                     </span>
@@ -576,6 +692,49 @@ export function DetectionsList() {
                   {groupDetections.map((detection) => (
                     <div key={detection.id} className="detection-card compact">
                       <div className="detection-header">
+                        {filters.stationIds.length > 1 && (
+                          <div className="station-info">
+                            <span className="station-icon">📍</span>
+                            <span className="station-name">{detection.station.name}</span>
+                          </div>
+                        )}
+
+                        {detection.soundscape?.url ? (
+                          <div className="audio-wrapper">
+                            <audio controls preload='metadata' className="audio-player">
+                              <source src={detection.soundscape.url.replace('/soundscapes/', '/soundscapes/normalize/').replace('media.birdweather', 'app.birdweather')} type="audio/mpeg" />
+                              Your browser does not support the audio element.
+                            </audio>
+                            {(detection.soundscape.duration || detection.soundscape.startTime !== undefined || 
+                              detection.soundscape.filesize || detection.soundscape.mode) && (
+                              <div className="audio-metadata">
+                                {detection.soundscape.duration !== undefined && (
+                                  <span className="audio-info" title="Duration">
+                                    ⏱️ {formatDuration(detection.soundscape.duration)}
+                                  </span>
+                                )}
+                                {detection.soundscape.startTime !== undefined && detection.soundscape.endTime !== undefined && (
+                                  <span className="audio-info" title="Detection window">
+                                    📍 {detection.soundscape.startTime.toFixed(1)}s - {detection.soundscape.endTime.toFixed(1)}s
+                                  </span>
+                                )}
+                                {detection.soundscape.filesize !== undefined && (
+                                  <span className="audio-info" title="File size">
+                                    💾 {formatFileSize(detection.soundscape.filesize)}
+                                  </span>
+                                )}
+                                {detection.soundscape.mode && (
+                                  <span className="audio-info audio-mode" title="Recording mode">
+                                    {detection.soundscape.mode}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="audio-spacer"></div>
+                        )}
+
                         <div className="detection-meta">
                           <span className="timestamp">{formatTime(detection.timestamp)}</span>
                           <span 
@@ -589,26 +748,52 @@ export function DetectionsList() {
                           </span>
                         </div>
                       </div>
-
-                      <div className="detection-details">
-                        <div className="station-info">
-                          <span className="station-icon">📍</span>
-                          <span className="station-name">{detection.station.name}</span>
-                        </div>
-
-                        {detection.soundscape?.url && (
-                          <audio controls preload='metadata' className="audio-player">
-                            <source src={detection.soundscape.url} type="audio/mpeg" />
-                            Your browser does not support the audio element.
-                          </audio>
-                        )}
-                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             ));
           })()}
+        </div>
+      )}
+
+      {!loading && !error && detections.length > 0 && (
+        <div className="pagination-controls">
+          <div className="pagination-info">
+            <span>
+              Showing {filteredAndSortedDetections.length} of {totalCount} detections
+            </span>
+            {totalCount > pageSize && (
+              <span className="pagination-pages">
+                (Page {currentPage} of {Math.ceil(totalCount / pageSize)})
+              </span>
+            )}
+          </div>
+          {totalCount > pageSize && (
+            <div className="pagination-buttons">
+              <button
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className="pagination-btn"
+                title="Previous page"
+              >
+                <span>←</span>
+                Previous
+              </button>
+              <span className="pagination-current">
+                {currentPage} / {Math.ceil(totalCount / pageSize)}
+              </span>
+              <button
+                onClick={handleNextPage}
+                disabled={!hasNextPage || currentPage >= Math.ceil(totalCount / pageSize)}
+                className="pagination-btn"
+                title="Next page"
+              >
+                Next
+                <span>→</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
       </div>

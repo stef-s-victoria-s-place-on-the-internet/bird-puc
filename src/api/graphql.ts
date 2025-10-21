@@ -10,8 +10,8 @@ export const graphqlClient = new GraphQLClient(API_URL, {
 });
 
 export const DETECTIONS_QUERY = `
-  query GetDetections($period: InputDuration, $first: Int) {
-    detections(period: $period, first: $first) {
+  query GetDetections($period: InputDuration, $first: Int, $stationIds: [ID!]) {
+    detections(period: $period, first: $first, stationIds: $stationIds) {
       nodes {
         id
         timestamp
@@ -32,6 +32,24 @@ export const DETECTIONS_QUERY = `
         soundscape {
           url
         }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
+    }
+  }
+`;
+
+export const STATIONS_QUERY = `
+  query GetStations($first: Int, $query: String) {
+    stations(first: $first, query: $query) {
+      nodes {
+        id
+        name
       }
       pageInfo {
         hasNextPage

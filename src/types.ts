@@ -49,3 +49,30 @@ export interface DetectionsResponse {
   detections: DetectionConnection;
 }
 
+export interface StationEdge {
+  cursor: string;
+  node: Station;
+}
+
+export interface StationConnection {
+  edges: StationEdge[];
+  nodes: Station[];
+  pageInfo: PageInfo;
+  totalCount: number;
+}
+
+export interface StationsResponse {
+  stations: StationConnection;
+}
+
+export interface FilterState {
+  stationIds: string[];
+  stationNames: string[];
+}
+
+export interface SearchHistoryItem {
+  type: 'station';
+  id: string;
+  name: string;
+  timestamp: number;
+}

@@ -2,6 +2,23 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+  margin-left: 320px;
+  transition: margin-left 0.3s ease;
+}
+
+/* Adjust layout when sidebar is collapsed */
+body:has(.sidebar.collapsed) .detections-container {
+  margin-left: 60px;
+}
+
+@media (max-width: 768px) {
+  .detections-container {
+    margin-left: 60px;
+  }
+  
+  body:has(.sidebar:not(.collapsed)) .detections-container {
+    margin-left: 60px;
+  }
 }
 
 .detections-header {

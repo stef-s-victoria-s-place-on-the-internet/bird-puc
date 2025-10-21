@@ -6,10 +6,13 @@ A beautiful React application for viewing bird detections from the BirdWeather A
 
 - 🐦 View bird detections by date
 - 📅 Easy date navigation with date picker
+- 🔍 Collapsible sidebar with advanced filters
+- 🎯 Filter by station with search and history
 - 🎵 Listen to bird soundscapes
 - 📊 See detection confidence scores
 - 📍 View detection locations and stations
 - 🎨 Modern, responsive UI with gradient backgrounds
+- 💾 Filter persistence with localStorage
 
 ## Setup
 
@@ -53,7 +56,13 @@ src/
 │   ├── DatePicker.tsx      # Date selection component
 │   ├── DatePicker.css
 │   ├── DetectionsList.tsx  # Main detections list view
-│   └── DetectionsList.css
+│   ├── DetectionsList.css
+│   ├── Sidebar.tsx         # Collapsible sidebar container
+│   ├── Sidebar.css
+│   ├── SearchFilters.tsx   # Filter components
+│   └── SearchFilters.css
+├── utils/
+│   └── localStorage.ts     # LocalStorage utilities
 ├── types.ts                # TypeScript type definitions
 ├── App.tsx                 # Main app component
 └── main.tsx               # Entry point

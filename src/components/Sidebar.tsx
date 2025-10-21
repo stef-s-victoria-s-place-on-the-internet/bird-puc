@@ -51,9 +51,7 @@ export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFor
         {!isCollapsed && (
           <div className="sidebar-content">
             <DateSelector selectedDate={selectedDate} onDateChange={onDateChange} dayCounts={dayCounts} />
-            <div className="sidebar-divider" />
             <SearchFilters onFiltersChange={onFiltersChange} availableSpecies={availableSpecies} />
-            <div className="sidebar-divider" />
             <Settings onTimeFormatChange={onTimeFormatChange} onNormalizeAudioUrlsChange={onNormalizeAudioUrlsChange} pageSize={pageSize} onPageSizeChange={onPageSizeChange} />
           </div>
         )}

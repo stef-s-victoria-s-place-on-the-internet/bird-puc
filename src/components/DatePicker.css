@@ -63,15 +63,15 @@
   color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: var(--space-2) var(--space-3);
-  background-color: var(--color-bg-primary);
-  border: var(--border-width-thin) solid var(--color-border-primary);
+  padding: var(--space-2) 0;
+  background-color: transparent;
+  border: none;
+  border-bottom: var(--border-width-thin) solid var(--color-border-tertiary);
   transition: all var(--transition-fast);
 }
 
 .date-display:hover .date-label {
-  background-color: var(--color-bg-hover);
-  border-color: var(--color-border-secondary);
+  border-bottom-color: var(--color-border-primary);
 }
 
 .today-btn {

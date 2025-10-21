@@ -265,7 +265,7 @@ select,
 textarea {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-base);
-  border: var(--border-width-thin) solid var(--color-border-primary);
+  border-bottom: var(--border-width-thin) solid var(--color-border-primary);
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   padding: var(--space-2) var(--space-3);

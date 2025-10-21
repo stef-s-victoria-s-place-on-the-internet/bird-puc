@@ -100,9 +100,10 @@
 
 .setting-select {
   width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: var(--border-width-medium) solid var(--color-border-primary);
-  background-color: var(--color-bg-primary);
+  padding: var(--space-2) 0;
+  border: none;
+  border-bottom: var(--border-width-thin) solid var(--color-border-tertiary);
+  background-color: transparent;
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-family: var(--font-family-mono);
@@ -114,12 +115,13 @@
 }
 
 .setting-select:hover {
-  background-color: var(--color-bg-hover);
+  border-bottom-color: var(--color-border-secondary);
 }
 
 .setting-select:focus {
   outline: none;
-  box-shadow: 0 0 0 var(--border-width-thin) var(--color-border-primary);
+  border-bottom-color: var(--color-border-primary);
+  border-bottom-width: var(--border-width-medium);
 }
 
 .setting-select option {

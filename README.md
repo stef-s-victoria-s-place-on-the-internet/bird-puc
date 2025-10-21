@@ -16,6 +16,10 @@ A beautiful React application for viewing bird detections from the BirdWeather A
 - 📍 View detection locations and stations
 - 🎨 Modern, responsive UI with gradient backgrounds
 - 💾 Persistent preferences with localStorage
+- ⚡ **Smart caching with React Query** - Lightning-fast page loads
+- 🔄 **Automatic background refresh** - Always up-to-date data
+- 💽 **IndexedDB persistence** - Cache survives page refreshes
+- 🌐 **Offline support** - View cached data without internet
 
 ## Setup
 
@@ -46,6 +50,7 @@ This application uses the [BirdWeather GraphQL API](https://app.birdweather.com/
 - **TypeScript** - Type safety
 - **Vite** - Build tool and dev server
 - **GraphQL** - API query language
+- **TanStack Query** - Data fetching and caching
 - **date-fns** - Date utilities
 - **Bun** - Package manager and runtime
 
@@ -74,9 +79,20 @@ src/
 └── main.tsx               # Entry point
 ```
 
+## Caching
+
+This app features intelligent caching for optimal performance:
+
+- **Instant page loads** - Previously viewed data loads instantly from cache
+- **Background updates** - Fresh data fetched automatically in the background
+- **Persistent storage** - Cache survives browser restarts (24-hour expiry)
+- **Smart invalidation** - Cache automatically refreshes when stale
+
+For more details, see [CACHING.md](./CACHING.md).
+
 ## Development
 
-- `bun run dev` - Start development server
+- `bun run dev` - Start development server with React Query DevTools
 - `bun run build` - Build for production
 - `bun run preview` - Preview production build
 - `bun run lint` - Run ESLint

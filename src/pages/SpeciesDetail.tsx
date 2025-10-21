@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
-import { graphqlClient } from '../api/graphql';
+import { fetchSpeciesDetections, queryKeys } from '../api/graphql';
 import { Detection, Species } from '../types';
 import { getAudioUrl } from '../utils/audioUrl';
 import { loadSettings } from '../utils/settings';
@@ -15,50 +16,9 @@ interface GroupedDetections {
   count: number;
 }
 
-const SPECIES_DETECTIONS_QUERY = `
-  query GetSpeciesDetections($speciesId: ID!, $first: Int, $stationIds: [ID!]) {
-    detections(speciesId: $speciesId, first: $first, stationIds: $stationIds) {
-      nodes {
-        id
-        timestamp
-        confidence
-        probability
-        species {
-          id
-          commonName
-          scientificName
-          color
-          imageUrl
-          thumbnailUrl
-        }
-        station {
-          id
-          name
-        }
-        soundscape {
-          id
-          url
-          downloadFilename
-          duration
-          startTime
-          endTime
-          filesize
-          timestamp
-        }
-      }
-      totalCount
-    }
-  }
-`;
-
 export function SpeciesDetail() {
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
-  const [detections, setDetections] = useState<Detection[]>([]);
-  const [species, setSpecies] = useState<Species | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
   const [timeFormat] = useState(() => loadSettings().timeFormat);
   const [normalizeAudioUrls] = useState(() => loadSettings().normalizeAudioUrls);
   const [stationIds] = useState(() => {
@@ -66,52 +26,27 @@ export function SpeciesDetail() {
     return filters?.stationIds || [];
   });
 
-  useEffect(() => {
-    const fetchSpeciesDetections = async () => {
-      if (!speciesId) return;
+  // Fetch species detections with React Query
+  const {
+    data,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.speciesDetections(speciesId || '', stationIds),
+    queryFn: () => fetchSpeciesDetections({
+      speciesId: speciesId!,
+      first: 1000,
+      stationIds: stationIds.length > 0 ? stationIds : undefined,
+    }),
+    enabled: !!speciesId, // Only fetch if speciesId exists
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+  });
 
-      setLoading(true);
-      setError(null);
-
-      try {
-        const variables: {
-          speciesId: string;
-          first: number;
-          stationIds?: string[];
-        } = {
-          speciesId,
-          first: 1000,
-        };
-
-        // Only include stationIds if there are any
-        if (stationIds.length > 0) {
-          variables.stationIds = stationIds;
-        }
-
-        const response = await graphqlClient.request<{
-          detections: {
-            nodes: Detection[];
-            totalCount: number;
-          };
-        }>(SPECIES_DETECTIONS_QUERY, variables);
-
-        const fetchedDetections = response.detections.nodes;
-        setDetections(fetchedDetections);
-        setTotalCount(response.detections.totalCount);
-        
-        if (fetchedDetections.length > 0) {
-          setSpecies(fetchedDetections[0].species);
-        }
-      } catch (err) {
-        console.error('Error fetching species detections:', err);
-        setError('Failed to load species detections. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSpeciesDetections();
-  }, [speciesId, stationIds]);
+  const detections = data?.nodes || [];
+  const totalCount = data?.totalCount || 0;
+  const species: Species | null = detections.length > 0 ? detections[0].species : null;
+  const error = queryError instanceof Error ? queryError.message : null;
 
   const groupedDetections: GroupedDetections[] = detections.reduce((groups, detection) => {
     const date = format(parseISO(detection.timestamp), 'yyyy-MM-dd');

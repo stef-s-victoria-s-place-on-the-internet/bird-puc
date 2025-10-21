@@ -12,6 +12,7 @@ export function DetectionsList() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [detections, setDetections] = useState<Detection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState<FilterState>(() => {
@@ -24,7 +25,12 @@ export function DetectionsList() {
   });
 
   const fetchDetections = useCallback(async () => {
-    setLoading(true);
+    // If we already have detections, show refreshing state instead of loading
+    if (detections.length > 0) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -65,8 +71,9 @@ export function DetectionsList() {
       setError(err instanceof Error ? err.message : 'Failed to fetch detections');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  }, [selectedDate, filters]);
+  }, [selectedDate, filters, detections.length]);
 
   useEffect(() => {
     fetchDetections();
@@ -117,6 +124,12 @@ export function DetectionsList() {
             {totalCount > 0 && (
               <span className="detection-count">
                 {totalCount} {totalCount === 1 ? 'detection' : 'detections'}
+              </span>
+            )}
+            {isRefreshing && (
+              <span className="refreshing-indicator">
+                <div className="mini-spinner"></div>
+                Refreshing...
               </span>
             )}
           </div>
@@ -184,7 +197,7 @@ export function DetectionsList() {
                 </div>
 
                 {detection.soundscape?.url && (
-                  <audio controls className="audio-player">
+                  <audio controls preload='metadata' className="audio-player">
                     <source src={detection.soundscape.url} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>

@@ -4,10 +4,12 @@ export type TimeFormat = 'auto' | '12h' | '24h';
 
 export interface Settings {
   timeFormat: TimeFormat;
+  normalizeAudioUrls: boolean;
 }
 
 const defaultSettings: Settings = {
   timeFormat: 'auto',
+  normalizeAudioUrls: true,
 };
 
 export const loadSettings = (): Settings => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -34,6 +34,7 @@ export function DetectionsList() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
+  const downloadCancelledRef = useRef(false);
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState<FilterState>(() => {
     // Initialize with saved filters from localStorage
@@ -50,6 +51,9 @@ export function DetectionsList() {
   });
   const [timeFormat, setTimeFormat] = useState<TimeFormat>(() => {
     return loadSettings().timeFormat;
+  });
+  const [normalizeAudioUrls, setNormalizeAudioUrls] = useState<boolean>(() => {
+    return loadSettings().normalizeAudioUrls;
   });
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
     const saved = localStorage.getItem('layoutMode');
@@ -228,6 +232,18 @@ export function DetectionsList() {
     setTimeFormat(format);
   }, []);
 
+  const handleNormalizeAudioUrlsChange = useCallback((enabled: boolean) => {
+    setNormalizeAudioUrls(enabled);
+  }, []);
+
+  // Helper function to conditionally normalize audio URLs
+  const getAudioUrl = useCallback((url: string) => {
+    if (normalizeAudioUrls) {
+      return url.replace('/soundscapes/', '/soundscapes/normalize/').replace('media.birdweather', 'app.birdweather');
+    }
+    return url;
+  }, [normalizeAudioUrls]);
+
   const handleLayoutModeChange = useCallback((mode: LayoutMode) => {
     setLayoutMode(mode);
     localStorage.setItem('layoutMode', mode);
@@ -333,6 +349,7 @@ export function DetectionsList() {
     
     if (totalCount === 0) return;
     
+    downloadCancelledRef.current = false;
     setIsDownloading(true);
     setDownloadProgress({ current: 0, total: 0 });
 
@@ -387,16 +404,28 @@ export function DetectionsList() {
 
       // Download and add files to zip, organized by species
       for (const [speciesName, speciesDetections] of Object.entries(detectionsBySpecies)) {
+        // Check if download was cancelled
+        if (downloadCancelledRef.current) {
+          console.log('Download cancelled by user');
+          break;
+        }
+
         // Create a safe folder name
         const folderName = speciesName.replace(/[^a-z0-9]/gi, '_');
         const speciesFolder = zip.folder(folderName);
 
         if (speciesFolder) {
           for (const detection of speciesDetections) {
+            // Check if download was cancelled
+            if (downloadCancelledRef.current) {
+              console.log('Download cancelled by user');
+              break;
+            }
+
             if (detection.soundscape?.id) {
               try {
                 // Fetch the audio file using normalized URL
-                const audioUrl = detection.soundscape.url.replace('/soundscapes/', '/soundscapes/normalize/').replace('media.birdweather', 'app.birdweather');
+                const audioUrl = getAudioUrl(detection.soundscape.url);
                 const response = await fetch(audioUrl);
                 const blob = await response.blob();
                 
@@ -417,23 +446,32 @@ export function DetectionsList() {
         }
       }
 
-      // Generate and download the zip file
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const fileName = filters.stationIds.length > 0 
-        ? `birdweather_${dateStr}_filtered.zip`
-        : `birdweather_${dateStr}.zip`;
-      
-      saveAs(zipBlob, fileName);
+      // Generate and download the zip file only if not cancelled
+      if (!downloadCancelledRef.current) {
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const fileName = filters.stationIds.length > 0 
+          ? `birdweather_${dateStr}_filtered.zip`
+          : `birdweather_${dateStr}.zip`;
+        
+        saveAs(zipBlob, fileName);
+      }
       
     } catch (err) {
       console.error('Error creating download:', err);
-      alert('Failed to create download. Please try again.');
+      if (!downloadCancelledRef.current) {
+        alert('Failed to create download. Please try again.');
+      }
     } finally {
       setIsDownloading(false);
       setDownloadProgress({ current: 0, total: 0 });
+      downloadCancelledRef.current = false;
     }
   };
+
+  const handleCancelDownload = useCallback(() => {
+    downloadCancelledRef.current = true;
+  }, []);
 
   return (
     <>
@@ -442,8 +480,11 @@ export function DetectionsList() {
         onDateChange={setSelectedDate}
         onFiltersChange={handleFiltersChange}
         onTimeFormatChange={handleTimeFormatChange}
+        onNormalizeAudioUrlsChange={handleNormalizeAudioUrlsChange}
         dayCounts={dayCounts}
         availableSpecies={availableSpecies}
+        pageSize={pageSize}
+        onPageSizeChange={handlePageSizeChange}
       />
       
       <div className="detections-container">
@@ -485,47 +526,43 @@ export function DetectionsList() {
                     By Bird
                   </button>
                 </div>
-                <div className="page-size-selector">
-                  <label htmlFor="page-size">Page size:</label>
-                  <select
-                    id="page-size"
-                    value={pageSize}
-                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                    className="page-size-select"
-                  >
-                    <option value={100}>100</option>
-                    <option value={250}>250</option>
-                    <option value={500}>500</option>
-                    <option value={1000}>1000</option>
-                    <option value={2500}>2500</option>
-                    <option value={5000}>5000</option>
-                  </select>
-                </div>
               </>
             )}
             {detections.length > 0 && detections.some(d => d.soundscape?.id) && (
-              <button
-                onClick={handleDownloadAll}
-                disabled={isDownloading}
-                className="download-btn"
-                title="Download all audio files as ZIP"
-              >
-                {isDownloading ? (
-                  <>
-                    <div className="mini-spinner"></div>
-                    {downloadProgress.total > 0 && (
-                      <span>
-                        {downloadProgress.current}/{downloadProgress.total}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <span className="download-icon">⬇️</span>
-                    Download All
-                  </>
+              <>
+                <button
+                  onClick={handleDownloadAll}
+                  disabled={isDownloading}
+                  className="download-btn"
+                  title="Download all audio files as ZIP"
+                >
+                  {isDownloading ? (
+                    <>
+                      <div className="mini-spinner"></div>
+                      {downloadProgress.total > 0 && (
+                        <span>
+                          {downloadProgress.current}/{downloadProgress.total}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span className="download-icon">⬇️</span>
+                      Download All
+                    </>
+                  )}
+                </button>
+                {isDownloading && (
+                  <button
+                    onClick={handleCancelDownload}
+                    className="download-btn cancel-btn"
+                    title="Cancel download"
+                  >
+                    <span>✕</span>
+                    Cancel
+                  </button>
                 )}
-              </button>
+              </>
             )}
           </div>
         </header>
@@ -589,7 +626,7 @@ export function DetectionsList() {
                 {detection.soundscape?.id ? (
                   <div className="audio-wrapper">
                     <audio controls preload='metadata' className="audio-player">
-                      <source src={detection.soundscape.url.replace('/soundscapes/', '/soundscapes/normalize/').replace('media.birdweather', 'app.birdweather')} type="audio/mpeg" />
+                      <source src={getAudioUrl(detection.soundscape.url)} type="audio/mpeg" />
                       Your browser does not support the audio element.
                     </audio>
                     {(detection.soundscape.duration || detection.soundscape.startTime !== undefined || 
@@ -702,7 +739,7 @@ export function DetectionsList() {
                         {detection.soundscape?.url ? (
                           <div className="audio-wrapper">
                             <audio controls preload='metadata' className="audio-player">
-                              <source src={detection.soundscape.url.replace('/soundscapes/', '/soundscapes/normalize/').replace('media.birdweather', 'app.birdweather')} type="audio/mpeg" />
+                              <source src={getAudioUrl(detection.soundscape.url)} type="audio/mpeg" />
                               Your browser does not support the audio element.
                             </audio>
                             {(detection.soundscape.duration || detection.soundscape.startTime !== undefined || 

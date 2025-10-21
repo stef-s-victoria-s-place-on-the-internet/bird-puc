@@ -11,13 +11,16 @@ interface SidebarProps {
   onDateChange: (date: Date) => void;
   onFiltersChange: (filters: FilterState) => void;
   onTimeFormatChange?: (format: TimeFormat) => void;
+  onNormalizeAudioUrlsChange?: (enabled: boolean) => void;
   dayCounts?: Record<string, number>;
   availableSpecies?: Species[];
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
 }
 
 const SIDEBAR_STATE_KEY = 'birdweather_sidebar_collapsed';
 
-export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFormatChange, dayCounts = {}, availableSpecies = [] }: SidebarProps) {
+export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFormatChange, onNormalizeAudioUrlsChange, dayCounts = {}, availableSpecies = [], pageSize, onPageSizeChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -51,7 +54,7 @@ export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFor
             <div className="sidebar-divider" />
             <SearchFilters onFiltersChange={onFiltersChange} availableSpecies={availableSpecies} />
             <div className="sidebar-divider" />
-            <Settings onTimeFormatChange={onTimeFormatChange} />
+            <Settings onTimeFormatChange={onTimeFormatChange} onNormalizeAudioUrlsChange={onNormalizeAudioUrlsChange} pageSize={pageSize} onPageSizeChange={onPageSizeChange} />
           </div>
         )}
       </aside>

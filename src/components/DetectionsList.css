@@ -237,7 +237,6 @@
 .detection-header {
   display: flex;
   gap: var(--space-4);
-  align-items: flex-start;
   flex-wrap: wrap;
 }
 
@@ -248,8 +247,7 @@
   display: flex;
   gap: var(--space-3);
   align-items: center;
-  flex: 1;
-  min-width: 200px;
+  min-width: 300px;
 }
 
 .species-thumbnail {
@@ -288,6 +286,8 @@
   flex: 1;
   min-width: 300px;
   display: flex;
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
   gap: var(--space-2);
 }

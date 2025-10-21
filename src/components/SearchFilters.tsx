@@ -25,7 +25,7 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
   const [showHistory, setShowHistory] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const searchTimeoutRef = useRef<number | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load filters from localStorage on mount
   useEffect(() => {

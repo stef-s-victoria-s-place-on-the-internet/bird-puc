@@ -11,11 +11,12 @@ interface SidebarProps {
   onDateChange: (date: Date) => void;
   onFiltersChange: (filters: FilterState) => void;
   onTimeFormatChange?: (format: TimeFormat) => void;
+  dayCounts?: Record<string, number>;
 }
 
 const SIDEBAR_STATE_KEY = 'birdweather_sidebar_collapsed';
 
-export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFormatChange }: SidebarProps) {
+export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFormatChange, dayCounts = {} }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -45,7 +46,7 @@ export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFor
         
         {!isCollapsed && (
           <div className="sidebar-content">
-            <DateSelector selectedDate={selectedDate} onDateChange={onDateChange} />
+            <DateSelector selectedDate={selectedDate} onDateChange={onDateChange} dayCounts={dayCounts} />
             <div className="sidebar-divider" />
             <SearchFilters onFiltersChange={onFiltersChange} />
             <div className="sidebar-divider" />

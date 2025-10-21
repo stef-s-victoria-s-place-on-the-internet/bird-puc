@@ -3,7 +3,7 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 320px;
+  width: 380px;
   background: rgba(30, 27, 75, 0.95);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
@@ -72,7 +72,7 @@
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;

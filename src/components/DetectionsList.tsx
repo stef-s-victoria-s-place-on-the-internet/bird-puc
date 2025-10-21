@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { graphqlClient, DETECTIONS_QUERY } from '../api/graphql';
@@ -9,9 +9,23 @@ import { loadFilters } from '../utils/localStorage';
 import { loadSettings, TimeFormat } from '../utils/settings';
 import './DetectionsList.css';
 
+// Helper function to format date for API in local timezone
+const formatDateForAPI = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const milliseconds = String(date.getMilliseconds()).padStart(3, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
+};
+
 export function DetectionsList() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [detections, setDetections] = useState<Detection[]>([]);
+  const [dayCounts, setDayCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -51,8 +65,8 @@ export function DetectionsList() {
 
       const variables: QueryVariables = {
         period: {
-          from: start.toISOString(),
-          to: end.toISOString(),
+          from: formatDateForAPI(start),
+          to: formatDateForAPI(end),
         },
         first: 100,
       };
@@ -78,9 +92,59 @@ export function DetectionsList() {
     }
   }, [selectedDate, filters, detections.length]);
 
+  // Fetch monthly counts for calendar
+  const fetchMonthlyCounts = useCallback(async () => {
+    try {
+      const start = startOfMonth(selectedDate);
+      const end = endOfMonth(selectedDate);
+
+      interface QueryVariables {
+        period: {
+          from: string;
+          to: string;
+        };
+        first: number;
+        stationIds?: string[];
+      }
+
+      const variables: QueryVariables = {
+        period: {
+          from: formatDateForAPI(start),
+          to: formatDateForAPI(end),
+        },
+        first: 10000, // Get up to 10k detections for the month
+      };
+
+      // Only add stationIds if filters are applied
+      if (filters.stationIds.length > 0) {
+        variables.stationIds = filters.stationIds;
+      }
+
+      const data = await graphqlClient.request<DetectionsResponse>(
+        DETECTIONS_QUERY,
+        variables
+      );
+
+      // Count detections by day
+      const counts: Record<string, number> = {};
+      data.detections.nodes.forEach((detection) => {
+        const dateKey = format(new Date(detection.timestamp), 'yyyy-MM-dd');
+        counts[dateKey] = (counts[dateKey] || 0) + 1;
+      });
+
+      setDayCounts(counts);
+    } catch (err) {
+      console.error('Error fetching monthly counts:', err);
+    }
+  }, [selectedDate, filters]);
+
   useEffect(() => {
     fetchDetections();
   }, [fetchDetections]);
+
+  useEffect(() => {
+    fetchMonthlyCounts();
+  }, [fetchMonthlyCounts]);
 
   const handleFiltersChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
@@ -135,8 +199,8 @@ export function DetectionsList() {
 
       const variables: QueryVariables = {
         period: {
-          from: start.toISOString(),
-          to: end.toISOString(),
+          from: formatDateForAPI(start),
+          to: formatDateForAPI(end),
         },
         first: 10000, // Fetch up to 10,000 detections for download
       };
@@ -228,6 +292,7 @@ export function DetectionsList() {
         onDateChange={setSelectedDate}
         onFiltersChange={handleFiltersChange}
         onTimeFormatChange={handleTimeFormatChange}
+        dayCounts={dayCounts}
       />
       
       <div className="detections-container">

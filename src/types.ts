@@ -76,3 +76,8 @@ export interface SearchHistoryItem {
   name: string;
   timestamp: number;
 }
+
+export interface DayCount {
+  date: string; // YYYY-MM-DD format
+  count: number;
+}

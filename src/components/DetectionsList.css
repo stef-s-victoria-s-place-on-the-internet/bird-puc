@@ -38,6 +38,13 @@ body:has(.sidebar.collapsed) .detections-container {
   flex-wrap: wrap;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .detections-header h1 {
   font-size: 2rem;
   font-weight: 700;
@@ -70,6 +77,47 @@ body:has(.sidebar.collapsed) .detections-container {
   border-top-color: #667eea;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
+}
+
+/* Layout Switcher */
+.layout-switcher {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.layout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.layout-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.layout-btn.active {
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.layout-icon {
+  font-size: 1rem;
 }
 
 .download-btn {
@@ -287,6 +335,102 @@ body:has(.sidebar.collapsed) .detections-container {
   filter: brightness(0.9) contrast(1.1);
 }
 
+/* Grouped Layout */
+.detections-list.grouped {
+  gap: 2rem;
+}
+
+.species-group {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.species-group:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.species-group-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.species-thumbnail-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.species-group-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.species-group-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.species-group-subtitle {
+  font-size: 1rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 0.75rem 0;
+}
+
+.detection-count-badge {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.species-detections {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Compact detection card for grouped view */
+.detection-card.compact {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detection-card.compact:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.detection-card.compact .detection-header {
+  margin-bottom: 0.75rem;
+}
+
+.detection-card.compact .detection-details {
+  padding-top: 0.75rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .detections-container {
@@ -302,6 +446,25 @@ body:has(.sidebar.collapsed) .detections-container {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+
+  .header-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout-switcher {
+    width: 100%;
+  }
+
+  .layout-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .download-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .detections-header h1 {
@@ -320,6 +483,25 @@ body:has(.sidebar.collapsed) .detections-container {
     align-items: flex-start;
     flex-direction: row;
     gap: 1rem;
+  }
+
+  .species-group {
+    padding: 1rem;
+  }
+
+  .species-group-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .species-thumbnail-large {
+    width: 60px;
+    height: 60px;
+  }
+
+  .species-group-title {
+    font-size: 1.5rem;
   }
 }
 

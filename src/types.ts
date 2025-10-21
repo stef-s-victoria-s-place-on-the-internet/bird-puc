@@ -68,10 +68,15 @@ export interface StationsResponse {
 export interface FilterState {
   stationIds: string[];
   stationNames: string[];
+  speciesIds: string[];
+  speciesNames: string[];
+  minConfidence: number;
+  timeOfDay: ('morning' | 'afternoon' | 'evening' | 'night')[];
+  sortBy: 'time-asc' | 'time-desc' | 'confidence-asc' | 'confidence-desc' | 'species-asc' | 'species-desc';
 }
 
 export interface SearchHistoryItem {
-  type: 'station';
+  type: 'station' | 'species';
   id: string;
   name: string;
   timestamp: number;

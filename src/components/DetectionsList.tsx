@@ -9,6 +9,8 @@ import { loadFilters } from '../utils/localStorage';
 import { loadSettings, TimeFormat } from '../utils/settings';
 import './DetectionsList.css';
 
+type LayoutMode = 'timeline' | 'grouped';
+
 // Helper function to format date for API in local timezone
 const formatDateForAPI = (date: Date): string => {
   const year = date.getFullYear();
@@ -35,13 +37,34 @@ export function DetectionsList() {
   const [filters, setFilters] = useState<FilterState>(() => {
     // Initialize with saved filters from localStorage
     const savedFilters = loadFilters();
-    return savedFilters || { stationIds: [], stationNames: [] };
+    return savedFilters || { 
+      stationIds: [], 
+      stationNames: [],
+      speciesIds: [],
+      speciesNames: [],
+      minConfidence: 0,
+      timeOfDay: [],
+      sortBy: 'time-desc'
+    };
   });
   const [timeFormat, setTimeFormat] = useState<TimeFormat>(() => {
     return loadSettings().timeFormat;
   });
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
+    const saved = localStorage.getItem('layoutMode');
+    return (saved as LayoutMode) || 'timeline';
+  });
 
   const fetchDetections = useCallback(async () => {
+    // Require station selection before fetching
+    if (filters.stationIds.length === 0) {
+      setDetections([]);
+      setTotalCount(0);
+      setLoading(false);
+      setIsRefreshing(false);
+      return;
+    }
+
     // If we already have detections, show refreshing state instead of loading
     if (detections.length > 0) {
       setIsRefreshing(true);
@@ -60,7 +83,7 @@ export function DetectionsList() {
           to: string;
         };
         first: number;
-        stationIds?: string[];
+        stationIds: string[];
       }
 
       const variables: QueryVariables = {
@@ -69,12 +92,8 @@ export function DetectionsList() {
           to: formatDateForAPI(end),
         },
         first: 100,
+        stationIds: filters.stationIds,
       };
-
-      // Only add stationIds if filters are applied
-      if (filters.stationIds.length > 0) {
-        variables.stationIds = filters.stationIds;
-      }
 
       const data = await graphqlClient.request<DetectionsResponse>(
         DETECTIONS_QUERY,
@@ -94,6 +113,12 @@ export function DetectionsList() {
 
   // Fetch monthly counts for calendar
   const fetchMonthlyCounts = useCallback(async () => {
+    // Require station selection before fetching
+    if (filters.stationIds.length === 0) {
+      setDayCounts({});
+      return;
+    }
+
     try {
       const start = startOfMonth(selectedDate);
       const end = endOfMonth(selectedDate);
@@ -104,7 +129,7 @@ export function DetectionsList() {
           to: string;
         };
         first: number;
-        stationIds?: string[];
+        stationIds: string[];
       }
 
       const variables: QueryVariables = {
@@ -113,12 +138,8 @@ export function DetectionsList() {
           to: formatDateForAPI(end),
         },
         first: 10000, // Get up to 10k detections for the month
+        stationIds: filters.stationIds,
       };
-
-      // Only add stationIds if filters are applied
-      if (filters.stationIds.length > 0) {
-        variables.stationIds = filters.stationIds;
-      }
 
       const data = await graphqlClient.request<DetectionsResponse>(
         DETECTIONS_QUERY,
@@ -173,11 +194,78 @@ export function DetectionsList() {
     setTimeFormat(format);
   }, []);
 
+  const handleLayoutModeChange = useCallback((mode: LayoutMode) => {
+    setLayoutMode(mode);
+    localStorage.setItem('layoutMode', mode);
+  }, []);
+
+  // Get unique species from detections for the filter dropdown
+  const availableSpecies = detections.reduce((acc, detection) => {
+    if (!acc.find(s => s.id === detection.species.id)) {
+      acc.push(detection.species);
+    }
+    return acc;
+  }, [] as typeof detections[0]['species'][]);
+
+  // Apply client-side filters and sorting
+  const filteredAndSortedDetections = detections
+    .filter(detection => {
+      // Species filter
+      if (filters.speciesIds.length > 0 && !filters.speciesIds.includes(detection.species.id)) {
+        return false;
+      }
+
+      // Confidence filter
+      if (detection.confidence < filters.minConfidence / 100) {
+        return false;
+      }
+
+      // Time of day filter
+      if (filters.timeOfDay.length > 0) {
+        const hour = new Date(detection.timestamp).getHours();
+        const matchesTimeOfDay = filters.timeOfDay.some(period => {
+          switch (period) {
+            case 'morning': return hour >= 5 && hour < 12;
+            case 'afternoon': return hour >= 12 && hour < 17;
+            case 'evening': return hour >= 17 && hour < 21;
+            case 'night': return hour >= 21 || hour < 5;
+            default: return false;
+          }
+        });
+        if (!matchesTimeOfDay) return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'time-asc':
+          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        case 'time-desc':
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        case 'confidence-asc':
+          return a.confidence - b.confidence;
+        case 'confidence-desc':
+          return b.confidence - a.confidence;
+        case 'species-asc':
+          return a.species.commonName.localeCompare(b.species.commonName);
+        case 'species-desc':
+          return b.species.commonName.localeCompare(a.species.commonName);
+        default:
+          return 0;
+      }
+    });
+
   const formatConfidence = (confidence: number) => {
     return `${(confidence * 100).toFixed(1)}%`;
   };
 
   const handleDownloadAll = async () => {
+    if (filters.stationIds.length === 0) {
+      alert('Please select at least one station to download detections.');
+      return;
+    }
+    
     if (totalCount === 0) return;
     
     setIsDownloading(true);
@@ -194,7 +282,7 @@ export function DetectionsList() {
           to: string;
         };
         first: number;
-        stationIds?: string[];
+        stationIds: string[];
       }
 
       const variables: QueryVariables = {
@@ -203,11 +291,8 @@ export function DetectionsList() {
           to: formatDateForAPI(end),
         },
         first: 10000, // Fetch up to 10,000 detections for download
+        stationIds: filters.stationIds,
       };
-
-      if (filters.stationIds.length > 0) {
-        variables.stationIds = filters.stationIds;
-      }
 
       // Fetch all detections for download
       const data = await graphqlClient.request<DetectionsResponse>(
@@ -293,6 +378,7 @@ export function DetectionsList() {
         onFiltersChange={handleFiltersChange}
         onTimeFormatChange={handleTimeFormatChange}
         dayCounts={dayCounts}
+        availableSpecies={availableSpecies}
       />
       
       <div className="detections-container">
@@ -301,7 +387,7 @@ export function DetectionsList() {
             <h1>Bird Detections</h1>
             {totalCount > 0 && (
               <span className="detection-count">
-                {totalCount} {totalCount === 1 ? 'detection' : 'detections'}
+                {filteredAndSortedDetections.length} of {totalCount} {totalCount === 1 ? 'detection' : 'detections'}
               </span>
             )}
             {isRefreshing && (
@@ -311,30 +397,52 @@ export function DetectionsList() {
               </span>
             )}
           </div>
-          {detections.length > 0 && detections.some(d => d.soundscape?.url) && (
-            <button
-              onClick={handleDownloadAll}
-              disabled={isDownloading}
-              className="download-btn"
-              title="Download all audio files as ZIP"
-            >
-              {isDownloading ? (
-                <>
-                  <div className="mini-spinner"></div>
-                  {downloadProgress.total > 0 && (
-                    <span>
-                      {downloadProgress.current}/{downloadProgress.total}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <>
-                  <span className="download-icon">⬇️</span>
-                  Download All
-                </>
-              )}
-            </button>
-          )}
+          <div className="header-right">
+            {filteredAndSortedDetections.length > 0 && (
+              <div className="layout-switcher">
+                <button
+                  className={`layout-btn ${layoutMode === 'timeline' ? 'active' : ''}`}
+                  onClick={() => handleLayoutModeChange('timeline')}
+                  title="Timeline view"
+                >
+                  <span className="layout-icon">📅</span>
+                  Timeline
+                </button>
+                <button
+                  className={`layout-btn ${layoutMode === 'grouped' ? 'active' : ''}`}
+                  onClick={() => handleLayoutModeChange('grouped')}
+                  title="Group by species"
+                >
+                  <span className="layout-icon">🦜</span>
+                  By Bird
+                </button>
+              </div>
+            )}
+            {detections.length > 0 && detections.some(d => d.soundscape?.url) && (
+              <button
+                onClick={handleDownloadAll}
+                disabled={isDownloading}
+                className="download-btn"
+                title="Download all audio files as ZIP"
+              >
+                {isDownloading ? (
+                  <>
+                    <div className="mini-spinner"></div>
+                    {downloadProgress.total > 0 && (
+                      <span>
+                        {downloadProgress.current}/{downloadProgress.total}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className="download-icon">⬇️</span>
+                    Download All
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </header>
 
       {loading && (
@@ -355,13 +463,28 @@ export function DetectionsList() {
 
       {!loading && !error && detections.length === 0 && (
         <div className="empty-state">
-          <p>🔍 No detections found for {format(selectedDate, 'MMMM d, yyyy')}</p>
+          {filters.stationIds.length === 0 ? (
+            <>
+              <p>📍 Please select a station from the sidebar to view detections</p>
+            </>
+          ) : (
+            <p>🔍 No detections found for {format(selectedDate, 'MMMM d, yyyy')}</p>
+          )}
         </div>
       )}
 
-      {!loading && !error && detections.length > 0 && (
+      {!loading && !error && detections.length > 0 && filteredAndSortedDetections.length === 0 && (
+        <div className="empty-state">
+          <p>🔍 No detections match your current filters</p>
+          <p style={{ fontSize: '0.9em', marginTop: '0.5rem', opacity: 0.8 }}>
+            Try adjusting your species, confidence, or time of day filters
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && filteredAndSortedDetections.length > 0 && layoutMode === 'timeline' && (
         <div className="detections-list">
-          {detections.map((detection) => (
+          {filteredAndSortedDetections.map((detection) => (
             <div key={detection.id} className="detection-card">
               <div className="detection-header">
                 <div className="species-info">
@@ -406,6 +529,86 @@ export function DetectionsList() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {!loading && !error && filteredAndSortedDetections.length > 0 && layoutMode === 'grouped' && (
+        <div className="detections-list grouped">
+          {(() => {
+            // Group detections by species
+            const grouped = filteredAndSortedDetections.reduce((acc, detection) => {
+              const speciesId = detection.species.id;
+              if (!acc[speciesId]) {
+                acc[speciesId] = {
+                  species: detection.species,
+                  detections: []
+                };
+              }
+              acc[speciesId].detections.push(detection);
+              return acc;
+            }, {} as Record<string, { species: typeof filteredAndSortedDetections[0]['species']; detections: Detection[] }>);
+
+            // Sort groups by species name
+            const sortedGroups = Object.values(grouped).sort((a, b) => 
+              a.species.commonName.localeCompare(b.species.commonName)
+            );
+
+            return sortedGroups.map(({ species, detections: groupDetections }) => (
+              <div key={species.id} className="species-group">
+                <div className="species-group-header">
+                  {species.thumbnailUrl && (
+                    <img
+                      src={species.thumbnailUrl}
+                      alt={species.commonName}
+                      className="species-thumbnail-large"
+                    />
+                  )}
+                  <div className="species-group-info">
+                    <h2 className="species-group-title">{species.commonName}</h2>
+                    <p className="species-group-subtitle">{species.scientificName}</p>
+                    <span className="detection-count-badge">
+                      {groupDetections.length} {groupDetections.length === 1 ? 'detection' : 'detections'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="species-detections">
+                  {groupDetections.map((detection) => (
+                    <div key={detection.id} className="detection-card compact">
+                      <div className="detection-header">
+                        <div className="detection-meta">
+                          <span className="timestamp">{formatTime(detection.timestamp)}</span>
+                          <span 
+                            className="confidence"
+                            style={{
+                              backgroundColor: `${detection.species.color}20`,
+                              color: detection.species.color || '#ffffff'
+                            }}
+                          >
+                            {formatConfidence(detection.confidence)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="detection-details">
+                        <div className="station-info">
+                          <span className="station-icon">📍</span>
+                          <span className="station-name">{detection.station.name}</span>
+                        </div>
+
+                        {detection.soundscape?.url && (
+                          <audio controls preload='metadata' className="audio-player">
+                            <source src={detection.soundscape.url} type="audio/mpeg" />
+                            Your browser does not support the audio element.
+                          </audio>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       )}
       </div>

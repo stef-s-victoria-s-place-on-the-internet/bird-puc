@@ -1,0 +1,133 @@
+.date-selector {
+  width: 100%;
+}
+
+.date-selector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.date-selector-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+}
+
+.today-badge {
+  padding: 0.25rem 0.625rem;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.selected-date {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.date-selector-calendar {
+  width: 100%;
+  background: transparent !important;
+  color: white;
+}
+
+/* Calendar styling overrides */
+.date-selector-calendar .rdp {
+  --rdp-accent-color: #667eea;
+  --rdp-accent-background-color: rgba(102, 126, 234, 0.2);
+  --rdp-day-font: inherit;
+  --rdp-day_button-border-radius: 8px;
+  --rdp-day_button-height: 36px;
+  --rdp-day_button-width: 36px;
+}
+
+.date-selector-calendar .rdp-root {
+  color: white;
+}
+
+.date-selector-calendar .rdp-day {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.date-selector-calendar .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.date-selector-calendar .rdp-day_selected {
+  background: rgba(102, 126, 234, 0.3) !important;
+  color: white !important;
+  font-weight: 600;
+  border: 1px solid rgba(102, 126, 234, 0.5);
+}
+
+.date-selector-calendar .rdp-day_today:not(.rdp-day_selected) {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.date-selector-calendar .rdp-day_disabled {
+  color: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+}
+
+.date-selector-calendar .rdp-day_outside {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.date-selector-calendar .rdp-month_caption {
+  color: white;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.date-selector-calendar .rdp-weekday {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.date-selector-calendar .rdp-nav_button {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  width: 28px;
+  height: 28px;
+}
+
+.date-selector-calendar .rdp-nav_button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.date-selector-calendar .rdp-nav_button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .date-selector-calendar {
+    font-size: 0.875rem;
+  }
+  
+  .date-selector-calendar .rdp {
+    --rdp-day_button-height: 32px;
+    --rdp-day_button-width: 32px;
+  }
+}
+

@@ -9,7 +9,46 @@
 - **Persistent State**: Sidebar state saved to localStorage
 - **Mobile Responsive**: Automatically adapts on mobile devices
 - **Smooth Animations**: Transitions for expand/collapse actions
-- **Organized Sections**: Filters at top, Settings at bottom with divider
+- **Organized Sections**: Calendar → Filters → Settings with dividers
+
+### Calendar Date Selector
+- **Visual Calendar**: Full month calendar view in sidebar
+- **Interactive Selection**: Click any date to view detections
+- **Today Indicator**: Blue highlight for current date
+- **Selected State**: Purple highlight for selected date
+- **Date Restrictions**: Cannot select future dates
+- **Month Navigation**: Arrow buttons to browse months
+- **Compact Display**: Fits perfectly in sidebar width
+
+## 📥 Batch Download
+
+### Download All Detections
+- **Green Download Button**: Appears in header when detections are loaded
+- **Organized by Species**: Creates folders for each bird species
+- **Smart Naming**: Files named with timestamp and confidence percentage
+- **Progress Indicator**: Shows download progress (e.g., "12/50")
+- **Client-side Processing**: Everything happens in your browser (no server needed)
+
+### File Structure
+```
+birdweather_2025-10-21.zip
+├── American_Robin/
+│   ├── 2025-10-21_08-15-32_95pct.mp3
+│   ├── 2025-10-21_09-23-45_87pct.mp3
+│   └── 2025-10-21_14-42-18_92pct.mp3
+├── Blue_Jay/
+│   ├── 2025-10-21_07-30-12_89pct.mp3
+│   └── 2025-10-21_13-15-44_94pct.mp3
+└── Northern_Cardinal/
+    └── 2025-10-21_10-05-23_91pct.mp3
+```
+
+### Features:
+- **Automatic Grouping**: Each species gets its own folder
+- **Descriptive Filenames**: Date, time, and confidence in filename
+- **Smart ZIP Naming**: Includes date and filter status
+- **Error Handling**: Continues if individual files fail
+- **Live Progress**: Real-time download counter
 
 ## ⚙️ Settings
 
@@ -89,6 +128,8 @@
 - TypeScript for type safety
 - React hooks (useState, useEffect, useRef, useCallback)
 - GraphQL integration with server-side filtering
+- Client-side ZIP creation with JSZip
+- Batch file download with progress tracking
 - Debounced search input (300ms)
 - LocalStorage persistence
 - Search history management (recent 5 stations)
@@ -102,29 +143,42 @@
    - On mobile, tap outside the sidebar to close it
    - Sidebar state persists across sessions
 
-2. **Filter by Station**:
+2. **Date Selection**:
+   - Open the sidebar to see the calendar
+   - Click any date to load detections for that day
+   - Use arrow buttons to navigate between months
+   - Current date is highlighted in blue
+   - Selected date shows in purple
+
+3. **Filter by Station**:
    - Open the sidebar if collapsed
    - Click the station search input
    - Type to search or view recent searches
    - Click a station to add it to filters
    - Detections automatically update
 
-3. **Manage Filters**:
+4. **Manage Filters**:
    - Click × on a tag to remove a station
    - Click "Clear All" to remove all filters
    - Filters persist automatically
    - Works seamlessly with date changes
 
-4. **Search History**:
+5. **Search History**:
    - Recent searches appear when input is focused
    - Click × on history items to remove them
    - History limited to 10 most recent items
 
-5. **Settings**:
+6. **Settings**:
    - Scroll down in the sidebar to access settings
    - Change time format preference (Auto/12h/24h)
    - Settings save automatically
    - Changes apply immediately to all detections
+
+7. **Download All**:
+   - Click the green "Download All" button in the header
+   - Wait for the download progress to complete
+   - ZIP file will automatically download to your browser's download folder
+   - Files are organized by species in separate folders
 
 ## 📝 Future Enhancements (Ideas)
 
@@ -132,8 +186,10 @@
 - Add confidence threshold slider
 - Add date range selection
 - Add more settings (theme, units, etc.)
-- Export filtered results
+- Export metadata as CSV/JSON
+- Selective download (choose species)
 - Save filter presets
 - Share filter URLs
 - Dark/Light mode toggle
+- Include detection metadata in ZIP
 

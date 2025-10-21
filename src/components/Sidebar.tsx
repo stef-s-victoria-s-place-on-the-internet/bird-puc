@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { SearchFilters } from './SearchFilters';
 import { Settings } from './Settings';
+import { DateSelector } from './DateSelector';
 import { FilterState } from '../types';
 import { TimeFormat } from '../utils/settings';
 import './Sidebar.css';
 
 interface SidebarProps {
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
   onFiltersChange: (filters: FilterState) => void;
   onTimeFormatChange?: (format: TimeFormat) => void;
 }
 
 const SIDEBAR_STATE_KEY = 'birdweather_sidebar_collapsed';
 
-export function Sidebar({ onFiltersChange, onTimeFormatChange }: SidebarProps) {
+export function Sidebar({ selectedDate, onDateChange, onFiltersChange, onTimeFormatChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -42,6 +45,8 @@ export function Sidebar({ onFiltersChange, onTimeFormatChange }: SidebarProps) {
         
         {!isCollapsed && (
           <div className="sidebar-content">
+            <DateSelector selectedDate={selectedDate} onDateChange={onDateChange} />
+            <div className="sidebar-divider" />
             <SearchFilters onFiltersChange={onFiltersChange} />
             <div className="sidebar-divider" />
             <Settings onTimeFormatChange={onTimeFormatChange} />

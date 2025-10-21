@@ -30,6 +30,7 @@ body:has(.sidebar.collapsed) .detections-container {
   flex-wrap: wrap;
 }
 
+
 .header-left {
   display: flex;
   align-items: baseline;
@@ -69,6 +70,50 @@ body:has(.sidebar.collapsed) .detections-container {
   border-top-color: #667eea;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.download-btn:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  transform: translateY(-1px);
+}
+
+.download-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.download-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.download-btn .mini-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(34, 197, 94, 0.3);
+  border-top-color: #22c55e;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.download-icon {
+  font-size: 1rem;
 }
 
 /* Loading, Error, and Empty States */

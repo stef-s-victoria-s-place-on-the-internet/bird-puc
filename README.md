@@ -5,12 +5,13 @@ A beautiful React application for viewing bird detections from the BirdWeather A
 ## Features
 
 - 🐦 View bird detections by date
-- 📅 Easy date navigation with date picker
+- 📅 **Calendar picker in sidebar** - Visual date selection
 - 🔍 Collapsible sidebar with advanced filters
 - 🎯 Filter by station with search and history
 - ⚙️ Customizable settings (time format)
 - 🕐 Choose between 12h, 24h, or auto time format
 - 🎵 Listen to bird soundscapes
+- 📥 **Download all audio files as ZIP** - Organized by species
 - 📊 See detection confidence scores
 - 📍 View detection locations and stations
 - 🎨 Modern, responsive UI with gradient backgrounds

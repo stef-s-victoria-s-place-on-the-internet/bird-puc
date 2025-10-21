@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import { graphqlClient, DETECTIONS_QUERY } from '../api/graphql';
 import { DetectionsResponse, Detection, FilterState } from '../types';
-import { DatePicker } from './DatePicker';
 import { Sidebar } from './Sidebar';
 import { loadFilters } from '../utils/localStorage';
 import { loadSettings, TimeFormat } from '../utils/settings';
@@ -13,6 +14,8 @@ export function DetectionsList() {
   const [detections, setDetections] = useState<Detection[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState<FilterState>(() => {
@@ -110,9 +113,119 @@ export function DetectionsList() {
     return `${(confidence * 100).toFixed(1)}%`;
   };
 
+  const handleDownloadAll = async () => {
+    if (totalCount === 0) return;
+    
+    setIsDownloading(true);
+    setDownloadProgress({ current: 0, total: 0 });
+
+    try {
+      // First, fetch ALL detections (not just the displayed 100)
+      const start = startOfDay(selectedDate);
+      const end = endOfDay(selectedDate);
+
+      interface QueryVariables {
+        period: {
+          from: string;
+          to: string;
+        };
+        first: number;
+        stationIds?: string[];
+      }
+
+      const variables: QueryVariables = {
+        period: {
+          from: start.toISOString(),
+          to: end.toISOString(),
+        },
+        first: 10000, // Fetch up to 10,000 detections for download
+      };
+
+      if (filters.stationIds.length > 0) {
+        variables.stationIds = filters.stationIds;
+      }
+
+      // Fetch all detections for download
+      const data = await graphqlClient.request<DetectionsResponse>(
+        DETECTIONS_QUERY,
+        variables
+      );
+
+      const allDetections = data.detections.nodes;
+      
+      const zip = new JSZip();
+      
+      // Group detections by species
+      const detectionsBySpecies = allDetections.reduce((acc, detection) => {
+        const speciesName = detection.species.commonName;
+        if (!acc[speciesName]) {
+          acc[speciesName] = [];
+        }
+        acc[speciesName].push(detection);
+        return acc;
+      }, {} as Record<string, Detection[]>);
+
+      // Count total files to download
+      const totalFiles = allDetections.filter(d => d.soundscape?.url).length;
+      setDownloadProgress({ current: 0, total: totalFiles });
+
+      let downloadedCount = 0;
+
+      // Download and add files to zip, organized by species
+      for (const [speciesName, speciesDetections] of Object.entries(detectionsBySpecies)) {
+        // Create a safe folder name
+        const folderName = speciesName.replace(/[^a-z0-9]/gi, '_');
+        const speciesFolder = zip.folder(folderName);
+
+        if (speciesFolder) {
+          for (const detection of speciesDetections) {
+            if (detection.soundscape?.url) {
+              try {
+                // Fetch the audio file
+                const response = await fetch(detection.soundscape.url);
+                const blob = await response.blob();
+                
+                // Create filename with timestamp
+                const timestamp = format(new Date(detection.timestamp), 'yyyy-MM-dd_HH-mm-ss');
+                const confidence = (detection.confidence * 100).toFixed(0);
+                const fileName = `${timestamp}_${confidence}pct.mp3`;
+                
+                // Add file to species folder
+                speciesFolder.file(fileName, blob);
+                
+                downloadedCount++;
+                setDownloadProgress({ current: downloadedCount, total: totalFiles });
+              } catch (err) {
+                console.error(`Failed to download ${detection.id}:`, err);
+              }
+            }
+          }
+        }
+      }
+
+      // Generate and download the zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const fileName = filters.stationIds.length > 0 
+        ? `birdweather_${dateStr}_filtered.zip`
+        : `birdweather_${dateStr}.zip`;
+      
+      saveAs(zipBlob, fileName);
+      
+    } catch (err) {
+      console.error('Error creating download:', err);
+      alert('Failed to create download. Please try again.');
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress({ current: 0, total: 0 });
+    }
+  };
+
   return (
     <>
-      <Sidebar 
+      <Sidebar
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
         onFiltersChange={handleFiltersChange}
         onTimeFormatChange={handleTimeFormatChange}
       />
@@ -133,7 +246,30 @@ export function DetectionsList() {
               </span>
             )}
           </div>
-          <DatePicker selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          {detections.length > 0 && detections.some(d => d.soundscape?.url) && (
+            <button
+              onClick={handleDownloadAll}
+              disabled={isDownloading}
+              className="download-btn"
+              title="Download all audio files as ZIP"
+            >
+              {isDownloading ? (
+                <>
+                  <div className="mini-spinner"></div>
+                  {downloadProgress.total > 0 && (
+                    <span>
+                      {downloadProgress.current}/{downloadProgress.total}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="download-icon">⬇️</span>
+                  Download All
+                </>
+              )}
+            </button>
+          )}
         </header>
 
       {loading && (

@@ -1,0 +1,203 @@
+/* ============================================
+   Species Detail Page
+   ============================================ */
+.species-detail {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+  overflow-y: auto;
+}
+
+/* ============================================
+   Header Section
+   ============================================ */
+.species-detail-header {
+  padding: var(--space-6);
+  border-bottom: var(--border-width-thin) solid var(--color-border-tertiary);
+  background-color: var(--color-bg-secondary);
+}
+
+.back-btn {
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-width-thin) solid var(--color-border-tertiary);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-4);
+}
+
+.back-btn:hover {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border-primary);
+}
+
+.species-header-content {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+.species-detail-image {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border: var(--border-width-thin) solid var(--color-border-secondary);
+  flex-shrink: 0;
+}
+
+.species-detail-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.species-detail-title {
+  font-size: var(--font-size-2xl);
+  font-family: var(--font-family-mono);
+  font-weight: bold;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.species-detail-scientific {
+  font-size: var(--font-size-lg);
+  font-family: var(--font-family-mono);
+  font-style: italic;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.species-detail-count {
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  padding: var(--space-2) 0;
+  border-top: var(--border-width-thin) solid var(--color-border-tertiary);
+}
+
+.species-detail-count strong {
+  color: var(--color-text-primary);
+  font-weight: bold;
+}
+
+.filtered-indicator {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+  margin-left: var(--space-2);
+}
+
+/* ============================================
+   Detections Container
+   ============================================ */
+.species-detections-container {
+  width: 100%;
+  padding: var(--space-6);
+}
+
+/* ============================================
+   Date Groups
+   ============================================ */
+.date-group {
+  margin-bottom: var(--space-8);
+}
+
+.date-group:last-child {
+  margin-bottom: 0;
+}
+
+.date-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) 0;
+  margin-bottom: var(--space-4);
+  border-bottom: var(--border-width-medium) solid var(--color-border-primary);
+}
+
+.date-group-title {
+  font-size: var(--font-size-lg);
+  font-family: var(--font-family-mono);
+  font-weight: bold;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.date-group-count {
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width-thin) solid var(--color-border-tertiary);
+  background-color: var(--color-bg-tertiary);
+}
+
+.date-group-detections {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   States
+   ============================================ */
+.loading-message,
+.error-message,
+.empty-message {
+  padding: var(--space-8);
+  text-align: center;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.loading-message {
+  color: var(--color-text-tertiary);
+}
+
+.error-message {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+  border: var(--border-width-thin) solid var(--color-border-tertiary);
+}
+
+.empty-message {
+  color: var(--color-text-muted);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+  .species-header-content {
+    flex-direction: column;
+  }
+
+  .species-detail-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .date-group-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+}
+

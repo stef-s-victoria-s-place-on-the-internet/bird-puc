@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Detection } from '../../types';
 import { TimeFormat } from '../../utils/settings';
 import { DetectionCard } from './DetectionCard';
@@ -17,9 +18,26 @@ export function SpeciesGroup({
   showStations,
   getAudioUrl 
 }: SpeciesGroupProps) {
+  const navigate = useNavigate();
+
+  const handleSpeciesClick = () => {
+    navigate(`/species/${species.id}`);
+  };
+
   return (
     <div className="species-group">
-      <div className="species-group-header">
+      <div 
+        className="species-group-header clickable"
+        onClick={handleSpeciesClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleSpeciesClick();
+          }
+        }}
+      >
         {species.thumbnailUrl && (
           <img
             src={species.thumbnailUrl}

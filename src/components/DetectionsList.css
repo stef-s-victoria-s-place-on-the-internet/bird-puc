@@ -246,6 +246,19 @@
   min-width: 300px;
 }
 
+.species-info.clickable {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.species-info.clickable:hover {
+  opacity: 0.8;
+}
+
+.species-info.clickable:hover .common-name {
+  text-decoration: underline;
+}
+
 .species-thumbnail {
   width: 48px;
   height: 48px;
@@ -414,6 +427,19 @@
   padding-bottom: var(--space-4);
   border-bottom: var(--border-width-thin) solid var(--color-border-tertiary);
   margin-bottom: var(--space-4);
+}
+
+.species-group-header.clickable {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.species-group-header.clickable:hover {
+  opacity: 0.8;
+}
+
+.species-group-header.clickable:hover .species-group-title {
+  text-decoration: underline;
 }
 
 .species-thumbnail-large {

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Detection } from '../../types';
 import { formatTime, formatConfidence } from '../../utils/formatters';
 import { TimeFormat } from '../../utils/settings';
@@ -18,11 +19,28 @@ export function DetectionCard({
   showStation = false,
   compact = false
 }: DetectionCardProps) {
+  const navigate = useNavigate();
+
+  const handleSpeciesClick = () => {
+    navigate(`/species/${detection.species.id}`);
+  };
+
   return (
     <div className={`detection-card ${compact ? 'compact' : ''}`}>
       <div className="detection-header">
         {!compact && (
-          <div className="species-info">
+          <div 
+            className="species-info clickable" 
+            onClick={handleSpeciesClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleSpeciesClick();
+              }
+            }}
+          >
             {detection.species.thumbnailUrl && (
               <img
                 src={detection.species.thumbnailUrl}
